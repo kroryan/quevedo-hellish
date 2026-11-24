@@ -1,0 +1,31 @@
+FRANCISCO DE QUEVEDO - SKIN EXCLUSIVA DE MARTA (Hellish Quart)
+
+Skin personalizada solo para Marta, sobre su esqueleto nativo de 68 huesos.
+Usa los movimientos y la espada originales de Marta. Cabeza, pelo y gafas rigidos.
+Incluye el ajuste de primera persona (FPP) para que la skin se vea en FPP.
+
+INSTALACION (recomendada)
+1. Cierra Hellish Quart.
+2. Doble clic en Install_Quevedo_Marta.cmd.
+   Copia los cuatro archivos a StreamingAssets y aplica el ajuste FPP de Marta.
+3. Abre el juego, elige a Marta y en Custom Skin selecciona a Quevedo.
+
+INSTALACION MANUAL (sin FPP)
+Copia en  Hellish Quart\Hellish Quart_Data\StreamingAssets\ :
+  skin_marta_quevedo
+  skin_marta_quevedo.manifest
+  pic_marta_quevedo
+  pic_marta_quevedo.manifest
+
+AJUSTE FPP
+Cambia 4 bytes del cargador de skins de Marta en resources.assets (build de Steam
+26432078, archivo de 894.925.288 bytes) para que en primera persona use la skin
+personalizada elegida. Solo se aplica si el original coincide exactamente por hash;
+guarda una copia del bloque original en marta_loader_backup.bin. Afecta solo a Marta.
+Si Steam actualiza o verifica los archivos del juego, vuelve a ejecutar el instalador.
+
+DESINSTALAR
+Uninstall_Quevedo_Marta.cmd  (quita la skin y restaura el cargador FPP original
+si no queda otra skin personalizada de Marta instalada).
+
+Compatible con otras skins de Marta instaladas a la vez (archivos distintos).
