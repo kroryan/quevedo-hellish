@@ -18,19 +18,21 @@ UNINSTALL
 Delete those four files from StreamingAssets.
 
 FIRST PERSON (FPP) - OPTIONAL
-The skin works without this. On Steam build 26432078, Marta's loader ignores
-custom skins in first person. To see the skin in FPP too, change 4 bytes of
-Hellish Quart_Data\resources.assets  with a hex editor in overwrite mode.
-Back up the file first. Only do it if the file is exactly 894,925,288 bytes
+The skin works without this. In the game version of November 2026, Marta's
+loader ignores custom skins in first person. To see the skin in FPP too,
+change 4 bytes of Hellish Quart_Data\resources.assets with a hex editor in
+overwrite mode.
+Back up the file first. Only do it if the file is exactly 895,141,008 bytes
 and the original values match this table:
 
   Offset (hex)   Original   New
-  0x32C11190     03         02
-  0x32C11194     79         6E
-  0x32C11195     65         6F
-  0x32C11196     73         00
+  0x32B93AC0     03         02
+  0x32B93AC4     79         6E
+  0x32B93AC5     65         6F
+  0x32B93AC6     73         00
 
 Save and check that the file size is unchanged. To undo it, restore the backup
-or verify the game files in Steam. The same change serves every Marta skin.
+or verify the game files in Steam. A game update replaces the file and undoes
+the change. The same change serves every Marta skin.
 
 Compatible with other Marta skins installed at the same time (different files).

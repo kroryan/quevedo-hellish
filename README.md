@@ -39,4 +39,4 @@ Close the game and copy the four bundles from the zip into `Hellish Quart_Data/S
 
 ## First-person (FPP) adjustment
 
-Optional and manual: `release/README.txt` lists the 4 bytes of Marta's skin loader (PlayMaker FSM, path ID 67770) in `resources.assets` to change with a hex editor. On Steam build 26432078 the true event of `isFPP?` goes from `yes` to `no`, so first person uses the selected custom skin.
+Optional and manual: `release/README.txt` lists the 4 bytes of Marta's skin loader (PlayMaker FSM, path ID 67815) in `resources.assets` to change with a hex editor. In the game version of November 2026 (resources.assets of 895,141,008 bytes) the true event of `isFPP?` goes from `yes` to `no`, so first person uses the selected custom skin.
