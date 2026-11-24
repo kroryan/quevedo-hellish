@@ -36,6 +36,11 @@ TRIS_TARGET = 100000
 tris = sum(len(p.vertices) - 2 for p in mesh.data.polygons)
 DECIMATED = tris > 2 * TRIS_TARGET
 if DECIMATED:
+    # Weld the UV-seam splits of the glTF first: decimating split seams moves
+    # each side on its own and opens cracks that show the texture background.
+    bmw = bmesh.new(); bmw.from_mesh(mesh.data)
+    bmesh.ops.remove_doubles(bmw, verts=list(bmw.verts), dist=1e-5)
+    bmw.to_mesh(mesh.data); bmw.free()
     bpy.context.view_layer.objects.active = mesh; mesh.select_set(True)
     d = mesh.modifiers.new('Budget', 'DECIMATE'); d.decimate_type = 'COLLAPSE'
     d.ratio = TRIS_TARGET / tris; d.use_collapse_triangulate = True
