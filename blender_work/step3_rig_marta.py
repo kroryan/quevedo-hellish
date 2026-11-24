@@ -74,6 +74,7 @@ for s in ('Left', 'Right'):
     move(s + 'Leg', J[s + 'Leg']['head']); turn(s + 'Leg', s + 'Foot', J[s + 'Foot']['head'])
     move(s + 'Foot', J[s + 'Foot']['head']); turn(s + 'Foot', s + 'ToeBase', J[s + 'ToeBase']['head'])
     move(s + 'ToeBase', J[s + 'ToeBase']['head']); turn(s + 'ToeBase', s + 'ToeBase_END', J[s + 'ToeBase']['tail'])
+fit_head = {b.name: b.head.copy() for b in ad.edit_bones}
 bpy.ops.object.mode_set(mode='OBJECT')
 
 # --- Weights: source names -> Marta names ------------------------------------
@@ -111,12 +112,49 @@ for i, w in enumerate(per_vertex):
         g.add([i], x / tot, 'REPLACE')
 
 # --- Carry the mesh into Marta's native bind pose ----------------------------
+# Limb segments are stretched along their bones while carrying the mesh into
+# the target skeleton. The source arms are much shorter than the fighter's bones
+# (upper arm ~0.19 vs 0.27 m, forearm ~0.19 vs 0.30 m) and the legs differ too.
+# Moving each bone to its target joint without stretching left the whole length
+# difference in the blend zones (elbow, wrist, shoulder), which pinched and
+# twisted the shoulders and arms in game. Each clavicle, upper arm, forearm, thigh and shin is
+# scaled along its own axis from its joint, so every joint lands on the target
+# skeleton and the segment between keeps its shape. Linear blend done by hand:
+# a stretch along an arbitrary axis is not representable as a pose bone matrix.
 mesh.parent = arm
-mod = mesh.modifiers.new('Armature', 'ARMATURE'); mod.object = arm
-for pb in arm.pose.bones:
-    pb.matrix = original[pb.name]; bpy.context.view_layer.update()
-dg = bpy.context.evaluated_depsgraph_get(); eo = mesh.evaluated_get(dg); em = eo.to_mesh()
-coords = [v.co.copy() for v in em.vertices]; eo.to_mesh_clear(); mesh.modifiers.remove(mod)
+SEGMENTS = [(s + a, s + b) for s in ('Left', 'Right') for a, b in
+            (('Shoulder', 'Arm'), ('Arm', 'ForeArm'), ('ForeArm', 'Hand'), ('UpLeg', 'Leg'), ('Leg', 'Foot'))]
+stretch = {}
+for a, c in SEGMENTS:
+    nh = original[a].translation; d = original[c].translation - nh
+    r = d.length / max(1e-6, (fit_head[c] - fit_head[a]).length); dn = d.normalized()
+    Sm = Matrix.Identity(3) + (r - 1) * Matrix(((dn.x * dn.x, dn.x * dn.y, dn.x * dn.z), (dn.y * dn.x, dn.y * dn.y, dn.y * dn.z), (dn.z * dn.x, dn.z * dn.y, dn.z * dn.z)))
+    stretch[a] = Matrix.Translation(nh) @ Sm.to_4x4() @ Matrix.Translation(-nh)
+    print('SEGMENT_STRETCH', a, round(r, 3), flush=True)
+# The game snaps every skin bone onto the fighter's bone (SetParent with local
+# position and rotation reset), so the fighter's joint positions rule. When the
+# model's hips sit higher or lower than the fighter's, the hip area had to
+# stretch or squash between pelvis and thighs and the arms lost proportion. The lower trunk (Hips and Spine weights) is
+# therefore stretched vertically below the chest joint (Spine1), so the mesh hip
+# joint lands on the fighter's; the thighs then start right there.
+z0 = original['Spine1'].translation.z
+mesh_hip = (fit_head['LeftUpLeg'].z + fit_head['RightUpLeg'].z) / 2
+native_hip = (original['LeftUpLeg'].translation.z + original['RightUpLeg'].translation.z) / 2
+r_trunk = (z0 - native_hip) / max(1e-6, z0 - mesh_hip)
+St = Matrix.Translation((0, 0, z0)) @ Matrix.Diagonal((1., 1., r_trunk, 1.)) @ Matrix.Translation((0, 0, -z0))
+for n in ('Hips', 'Spine'): stretch[n] = St
+print('TRUNK_STRETCH', round(r_trunk, 3), 'mesh_hip', round(mesh_hip, 3), 'native_hip', round(native_hip, 3), flush=True)
+Mb = {}
+for b in ad.bones:
+    M = original[b.name] @ b.matrix_local.inverted()
+    Mb[b.name] = stretch[b.name] @ M if b.name in stretch else M
+gname = {g.index: g.name for g in mesh.vertex_groups}
+coords = []
+for v in mesh.data.vertices:
+    acc = Vector((0., 0., 0.)); tw = 0.
+    for g in v.groups:
+        acc += g.weight * (Mb[gname[g.group]] @ v.co); tw += g.weight
+    coords.append(acc / tw if tw > 0 else v.co.copy())
 for v, c in zip(mesh.data.vertices, coords): v.co = c
 bpy.context.view_layer.objects.active = arm; bpy.ops.object.mode_set(mode='EDIT')
 for b in ad.edit_bones: b.matrix = original[b.name]; b.length = origlen[b.name]
